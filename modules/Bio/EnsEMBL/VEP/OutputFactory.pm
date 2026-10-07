@@ -1738,19 +1738,10 @@ sub TranscriptVariationAllele_to_output_hash {
         $self->add_sift_polyphen($vfoa, $hash);
       }
     }
-    my $strand = $tr->strand() > 0 ? 1 : -1;
-    # HGVS
-    if($self->{hgvsc}) {
-      my $hgvs_t = $vfoa->hgvs_transcript(undef, !$self->param('shift_3prime'));
-      my $offset = $vfoa->hgvs_offset;
-
-      $hash->{HGVSc} = $hgvs_t if $hgvs_t;
-      $hash->{HGVS_OFFSET} = $offset * $strand if $offset && $hgvs_t;
-    }
-
     if($self->{hgvsp}) {
       $vfoa->{remove_hgvsp_version} = 1 if $self->{remove_hgvsp_version};
       my $hgvs_p = $vfoa->hgvs_protein(undef, $self->{hgvsp_use_prediction});
+      my $strand = $tr->strand() > 0 ? 1 : -1;
       my $offset = $vfoa->hgvs_offset;
 
       # URI encode "="
@@ -1760,6 +1751,26 @@ sub TranscriptVariationAllele_to_output_hash {
       $hash->{HGVS_OFFSET} = $offset * $strand if $offset && $hgvs_p;
     }
     $hash->{REFSEQ_OFFSET} = $vfoa->{refseq_misalignment_offset} if defined($vfoa->{refseq_misalignment_offset}) && $vfoa->{refseq_misalignment_offset} != 0;
+  }
+
+  # By default, emit HGVSc only for variants within transcript feature bounds.
+  # Optional promoter mode allows upstream HGVSc within a user-defined window.
+  my $allow_upstream_hgvsc = 0;
+  if(!$pre->{within_feature}) {
+    my $promoter_window = $self->param('hgvs_promoter') || 0;
+    if($promoter_window > 0 && grep {$_ eq 'upstream_gene_variant'} @{$hash->{Consequence} || []}) {
+      my $distance = $tv->distance_to_transcript;
+      $allow_upstream_hgvsc = 1 if defined($distance) && $distance <= $promoter_window;
+    }
+  }
+
+  if($self->{hgvsc} && ($pre->{within_feature} || $allow_upstream_hgvsc)) {
+    my $strand = $tr->strand() > 0 ? 1 : -1;
+    my $hgvs_t = $vfoa->hgvs_transcript(undef, !$self->param('shift_3prime'));
+    my $offset = $vfoa->hgvs_offset;
+
+    $hash->{HGVSc} = $hgvs_t if $hgvs_t;
+    $hash->{HGVS_OFFSET} = $offset * $strand if $offset && $hgvs_t;
   }
 
 
