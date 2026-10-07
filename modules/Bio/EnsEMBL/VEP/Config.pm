@@ -197,6 +197,7 @@ our @VEP_PARAMS = (
   'hgvsg_use_accession',     # force HGVSg to return on chromosome accession instead of input chr name
   'hgvsp_use_prediction',    # force HGVSp to return the notation in predicted format
   'shift_hgvs=i',            # disable/enable 3-prime shifting of HGVS indels to comply with standard
+  'hgvs_promoter=i',         # optional upstream window (bp) to emit HGVSc for upstream transcript-adjacent variants
   'ambiguous_hgvs',          # allow input HGVSp. to resolve to many input variants
   'sift=s',                  # SIFT predictions
   'polyphen=s',              # PolyPhen predictions
@@ -303,6 +304,7 @@ our %DEFAULTS = (
   failed            => 0,
   core_type         => 'core',
   polyphen_analysis => 'humvar',
+  hgvs_promoter     => 0,
   pick_order        => [qw(mane_select mane_plus_clinical canonical appris tsl biotype ccds rank length ensembl refseq )],
   terminal_width    => 48,
   vcf_info_field    => 'CSQ',
